@@ -1,22 +1,154 @@
 ---
 import Base from '../layouts/Base.astro';
 import { SITE } from '../lib/site';
+
+const skills: { label: string; items: string[]; note: string }[] = [
+  { label: '코딩', items: ['Java', 'JavaScript', 'C/C++', 'Python', 'C#', 'PHP', 'JSP', 'ASP', 'Shell(Bash)'], note: '대체로 다룸 · 간단한 프로젝트 및 자동화 가능' },
+  { label: '프레임워크', items: ['Spring', 'Laravel'], note: '사이트 생성 및 관리 가능' },
+  { label: 'IDE', items: ['Eclipse', 'IntelliJ', 'VS Code', 'Visual Studio'], note: '확장 프로그램 설치 및 설정 가능' },
+  { label: '문서', items: ['MS Office', '한글(HWP)', 'LibreOffice'], note: '문서 작업에 어려움 없음' },
+  { label: '리버싱', items: ['HxD', 'x64dbg', 'gdb'], note: '초급' },
+  { label: 'OS', items: ['Linux (Ubuntu · Rocky · Kali)', 'Windows', 'Windows Server 2003+'], note: '설치 · 부팅 · 설정 · 패키지 설치 · 소스 컴파일 · 트러블슈팅 · 로그 분석 (커널 제외)' },
+  { label: 'DB', items: ['MySQL / MariaDB', 'MSSQL', 'Oracle'], note: '분석 · HA 구성 등' },
+  { label: '컨테이너 · 클라우드', items: ['Docker (+Compose)', 'Kubernetes', 'AWS', 'Azure'], note: '구성 및 운영' },
+  { label: '모니터링 · HA · 인프라', items: ['Zabbix', 'Pacemaker', 'BIND'], note: '구성 · 운영' },
+  { label: '웹 · WAS', items: ['Apache', 'Nginx', 'WebtoB', 'Tomcat', 'JEUS', 'Lena'], note: '설정 오류 · OOM 등 장애 조치 및 원인 분석' },
+  { label: '네트워크 장비', items: ['Cisco', 'Dasan', 'Juniper'], note: 'L2~L4 · 설정 및 장애 조치 등' },
+  { label: '보안 장비', items: ['SECUI', 'AhnLab (FW · DDoS · IPS)'], note: '설정 · 장애 조치 · 보안 정책 설정 등' },
+  { label: '하드웨어 · 스토리지', items: ['Dell', 'Brocade', 'HPE (서버 · 스토리지 · SAN)'], note: '설정 · 펌웨어 업그레이드 · 트러블슈팅 등' },
+  { label: '기타', items: ['SSO', 'VMware (하이퍼바이저)'], note: '구성 및 운영' },
+];
+
+const projects: string[] = [
+  '전산 장비실 이전 사업 총괄',
+  '가상화 서버 이전 및 업그레이드 사업 총괄',
+  '무선 AP 네트워크 재설계 사업 총괄',
+  '공인 IP → 사설 IP 전환 사업 총괄',
+];
+
+const traits: { title: string; body: string }[] = [
+  { title: '꼼꼼함과 신중함', body: '어떤 업무든 먼저 논리적으로 따져 보고, 시뮬레이션이나 샌드박스로 예상 결과를 직접 확인합니다. 내 작업이 어떤 영향을 미칠지 항상 먼저 생각합니다.' },
+  { title: '끈기', body: '반드시 해결해야 하는 일이라면 끝까지 물고 늘어져 결국 해결합니다.' },
+  { title: '성실함', body: '맡은 일은 마감일을 항상 지키고, 어려워 보이는 일은 미리 조율해 둡니다.' },
+];
 ---
-<Base title="About" description="LeJus 소개">
+<Base title="About" description="LeJus 소개 — 다양한 인프라·장비를 직접 다뤄 본 경험과 활용 기술, 경력">
   <section class="hero">
     <p class="eyebrow">$ whoami</p>
     <h1>LeJus</h1>
-    <p>정보보안과 IT를 공부하고, 직접 실험한 내용을 기록합니다.</p>
+    <p>다양한 장비를 직접 다뤄 본 경험을 바탕으로, 그 경험을 토대로 폭넓은 작업을 합니다.</p>
   </section>
+
   <div class="prose">
-    <h2>관심 분야</h2>
-    <ul>
-      <li>시스템 · 커널 보안</li>
-      <li>네트워크 모니터링 · 패킷 분석</li>
-      <li>리버스 엔지니어링</li>
-      <li>웹 애플리케이션 보안</li>
-    </ul>
+    <h2>활용 기술</h2>
+    <div class="skill-grid">
+      {skills.map((s) => (
+        <div class="skill">
+          <h3>{s.label}</h3>
+          <div class="tags">{s.items.map((i) => <span class="tag">{i}</span>)}</div>
+          <p class="note">{s.note}</p>
+        </div>
+      ))}
+    </div>
+
+    <h2>포트폴리오</h2>
+    <p class="muted-line">준비 중입니다. (3개가량 추가 예정)</p>
+
+    <h2>경력</h2>
+    <div class="exp">
+      <div class="exp-head">
+        <strong>○○대학교 — 통합 전산 장비 유지보수</strong>
+        <span class="exp-meta">4년 · 주임</span>
+      </div>
+      <p class="note">주요 업무: 네트워크 설계 및 보수, 보안 정책 수립 및 검토, 전 장비(통신사 회선 포함) 설정 및 장애 조치</p>
+      <p class="note">주요 프로젝트</p>
+      <ul>
+        {projects.map((p) => <li>{p}</li>)}
+      </ul>
+    </div>
+
+    <h2>나를 설명하는 3가지</h2>
+    <div class="traits">
+      {traits.map((t, i) => (
+        <div class="trait">
+          <span class="trait-no">{String(i + 1).padStart(2, '0')}</span>
+          <div>
+            <strong>{t.title}</strong>
+            <p>{t.body}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+
     <h2>Contact</h2>
     <p><a href={SITE.github} target="_blank" rel="noopener">GitHub</a></p>
   </div>
 </Base>
+
+<style>
+  .skill-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 14px;
+    margin: 20px 0 8px;
+  }
+  .skill {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    padding: 16px 18px;
+  }
+  .skill h3 {
+    margin: 0 0 10px;
+    font-size: 15px;
+    font-family: var(--font-mono);
+    color: var(--accent);
+  }
+  .note {
+    margin: 10px 0 0;
+    font-size: 13.5px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+  .muted-line { color: var(--muted); }
+
+  .exp {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    padding: 18px 20px;
+    margin-top: 12px;
+  }
+  .exp-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .exp-meta {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .exp ul { margin: 6px 0 0; }
+
+  .traits { display: grid; gap: 12px; margin-top: 12px; }
+  .trait {
+    display: flex;
+    gap: 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    padding: 16px 18px;
+  }
+  .trait-no {
+    font-family: var(--font-mono);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1.3;
+  }
+  .trait strong { display: block; margin-bottom: 4px; }
+  .trait p { margin: 0; color: var(--text-soft); font-size: 15px; }
+</style>
