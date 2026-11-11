@@ -7,14 +7,19 @@ import { url, formatDate, readingTime, SITE } from '../../lib/site';
 
 export async function getStaticPaths() {
   const posts = await getPosts();
-  return posts.map((post, i) => ({
-    params: { slug: post.id },
-    props: { post, newer: posts[i - 1], older: posts[i + 1] },
-  }));
+  return posts.map((post, i) => {
+    const related = posts
+      .filter((p) => p.id !== post.id && p.data.category === post.data.category)
+      .slice(0, 4);
+    return {
+      params: { slug: post.id },
+      props: { post, newer: posts[i - 1], older: posts[i + 1], related },
+    };
+  });
 }
 
-interface Props { post: Post; newer?: Post; older?: Post }
-const { post, newer, older } = Astro.props;
+interface Props { post: Post; newer?: Post; older?: Post; related: Post[] }
+const { post, newer, older, related } = Astro.props;
 const { Content, headings } = await render(post);
 const minutes = readingTime(post.body);
 const toc = headings.filter((h) => h.depth === 2 || h.depth === 3);
@@ -46,6 +51,7 @@ const blogPostingLd = {
   modifiedTime={modified}
   jsonLd={blogPostingLd}
 >
+  <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
   <article>
     <header class="post-header">
       <div class="meta">
@@ -58,7 +64,7 @@ const blogPostingLd = {
       <p class="desc">{post.data.description}</p>
       {post.data.tags.length > 0 && (
         <div class="tags">
-          {post.data.tags.map((t) => <a class="tag" href={url(`/tags/${slugifyTag(t)}/`)}>#{t}</a>)}
+          {post.data.tags.map((t) => <a class="tag" href={`${url('/search/')}?q=${encodeURIComponent(t)}`}>#{t}</a>)}
         </div>
       )}
     </header>
@@ -66,6 +72,21 @@ const blogPostingLd = {
       <Content />
     </div>
     <footer class="post-footer">
+      {related.length > 0 && (
+        <section class="related" aria-label="관련 글">
+          <h2 class="section-title">같은 카테고리의 다른 글</h2>
+          <ul class="related-list">
+            {related.map((p) => (
+              <li>
+                <a href={url(`/posts/${p.id}/`)}>
+                  <span class="related-title">{p.data.title}</span>
+                  <span class="related-date">{formatDate(p.data.date)}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       <nav class="post-nav" aria-label="이전/다음 글">
         {older && <a class="prev" href={url(`/posts/${older.id}/`)}><small>← 이전 글</small>{older.data.title}</a>}
         {newer && <a class="next" href={url(`/posts/${newer.id}/`)}><small>다음 글 →</small>{newer.data.title}</a>}
@@ -132,5 +153,21 @@ const blogPostingLd = {
       if (current) map.get(current.id)?.setAttribute('aria-current', 'true');
     }, { rootMargin: '-80px 0px -60% 0px' });
     map.forEach((_, id) => { const el = document.getElementById(id); if (el) io.observe(el); });
+  })();
+</script>
+
+<script is:inline>
+  (() => {
+    const bar = document.getElementById('reading-progress');
+    if (!bar) return;
+    const update = () => {
+      const h = document.documentElement;
+      const max = h.scrollHeight - h.clientHeight;
+      const p = max > 0 ? Math.min(1, h.scrollTop / max) : 0;
+      bar.style.transform = 'scaleX(' + p + ')';
+    };
+    update();
+    addEventListener('scroll', update, { passive: true });
+    addEventListener('resize', update, { passive: true });
   })();
 </script>
