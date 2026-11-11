@@ -7,8 +7,7 @@
     "dev": "astro dev",
     "build": "astro check && astro build",
     "preview": "astro preview",
-    "new": "node scripts/new-post.mjs",
-    "editor": "node scripts/editor.mjs"
+    "new": "node scripts/new-post.mjs"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.4",

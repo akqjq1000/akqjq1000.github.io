@@ -26,16 +26,6 @@ npm run new -- "포스트 제목"
 `src/content/posts/YYYY-MM-DD-포스트-제목.md` 가 `draft: true` 상태로 생성된다.
 작성을 마치면 `draft: false`로 바꾸고 `main`에 push 하면 자동 배포된다.
 
-### 로컬 편집기
-
-```bash
-npm install        # 최초 1회 (미리보기에 필요)
-npm run editor     # http://127.0.0.1:4322
-```
-
-브라우저에서 글을 생성·수정·삭제할 수 있는 로컬 전용 편집기다. 저장·삭제 시 해당 파일만 자동으로 commit + push 하며(`main`이면 바로 배포), 로컬 git 인증을 사용하고 외부 접속은 받지 않는다.
-새 글 본문은 `scripts/post-template.md`로 시작하고(수정 가능), 제목·본문에 나온 기존 태그와 코드 블록 언어를 태그로 추천한다. 미리보기는 블로그와 같은 Markdown 설정(`astro.config.mjs`)으로 렌더링한다.
-
 ### Frontmatter
 
 `src/content.config.ts`의 스키마를 따른다.
@@ -82,7 +72,7 @@ src/
     site.ts                # 사이트 메타 · URL · 날짜·읽기시간 포맷
   styles/global.css        # 전역 스타일
 public/                    # 정적 파일 (favicon, 이미지, ads.txt 등)
-scripts/                   # new-post.mjs · editor.mjs · post-template.md
+scripts/                   # new-post.mjs · post-template.md
 astro.config.mjs           # site · base · sitemap · Markdown(Shiki) 설정
 ```
 
