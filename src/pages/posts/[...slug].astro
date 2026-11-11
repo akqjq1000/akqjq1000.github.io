@@ -64,7 +64,7 @@ const blogPostingLd = {
       <p class="desc">{post.data.description}</p>
       {post.data.tags.length > 0 && (
         <div class="tags">
-          {post.data.tags.map((t) => <a class="tag" href={`${url('/search/')}?q=${encodeURIComponent(t)}`}>#{t}</a>)}
+          {post.data.tags.map((t) => <button class="tag" type="button" data-search={t}>#{t}</button>)}
         </div>
       )}
     </header>
