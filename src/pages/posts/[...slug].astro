@@ -3,7 +3,7 @@ import { render } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import Sidebar from '../../components/Sidebar.astro';
 import { getPosts, slugifyTag, type Post } from '../../lib/posts';
-import { url, formatDate, readingTime } from '../../lib/site';
+import { url, formatDate, readingTime, SITE } from '../../lib/site';
 
 export async function getStaticPaths() {
   const posts = await getPosts();
@@ -18,8 +18,34 @@ const { post, newer, older } = Astro.props;
 const { Content, headings } = await render(post);
 const minutes = readingTime(post.body);
 const toc = headings.filter((h) => h.depth === 2 || h.depth === 3);
+
+const postUrl = new URL(url(`/posts/${post.id}/`), Astro.site).href;
+const published = post.data.date.toISOString();
+const modified = (post.data.updated ?? post.data.date).toISOString();
+const blogPostingLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BlogPosting',
+  headline: post.data.title,
+  description: post.data.description,
+  datePublished: published,
+  dateModified: modified,
+  author: { '@type': 'Person', name: SITE.author, url: SITE.github },
+  publisher: { '@type': 'Person', name: SITE.author },
+  mainEntityOfPage: { '@type': 'WebPage', '@id': postUrl },
+  url: postUrl,
+  inLanguage: 'ko-KR',
+  articleSection: post.data.category,
+  ...(post.data.tags.length > 0 ? { keywords: post.data.tags.join(', ') } : {}),
+};
 ---
-<Base title={post.data.title} description={post.data.description} type="article">
+<Base
+  title={post.data.title}
+  description={post.data.description}
+  type="article"
+  publishedTime={published}
+  modifiedTime={modified}
+  jsonLd={blogPostingLd}
+>
   <article>
     <header class="post-header">
       <div class="meta">
