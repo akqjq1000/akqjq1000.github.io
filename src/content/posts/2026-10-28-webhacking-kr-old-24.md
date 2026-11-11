@@ -29,7 +29,7 @@ tags: [webhacking.kr, web, wargame, filter-bypass, php, cookie]
 IP가 `127.0.0.1`(로컬호스트)이면 풀린다.
 
 ```
-client ip    14.41.76.65
+client ip    203.0.113.45
 agent        Mozilla/5.0 ...
 Wrong IP!
 ```

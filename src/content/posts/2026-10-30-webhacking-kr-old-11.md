@@ -52,9 +52,9 @@ PHP 눈에 실제로 어떻게 보이는지**를 정확히 해석하는 게 전�
 변수를 **보간(interpolation)** 한다. `$_SERVER[REMOTE_ADDR]`처럼 **따옴표 없는 키**도
 큰따옴표 문자열 안에서는 그대로 배열 참조로 풀린다. 즉 패턴에는 내 IP가 들어간다.
 
-이번 세션에서 서버가 본 내 IP는 `14.41.76.65`였다(같은 사이트의 `bonus-4` 페이지가
-`client ip`로 `REMOTE_ADDR`을 그대로 찍어줘서 확인했다). 그러면 패턴의 그 자리는
-`14.41.76.65`가 된다. **접속자마다 패턴이 달라진다**는 뜻이다.
+이번 세션에서 서버가 본 내 IP는 `203.0.113.45`였다(같은 사이트의 `bonus-4` 페이지가
+`client ip`로 `REMOTE_ADDR`을 그대로 찍어줘서 확인했다 — 실제 IP는 익명화해 문서용 예시값으로 표기한다). 그러면 패턴의 그 자리는
+`203.0.113.45`가 된다. **접속자마다 패턴이 달라진다**는 뜻이다.
 
 ### 2-2. `\tp\ta\ts\ts` — `\t`는 탭 문자다
 
@@ -78,7 +78,7 @@ PHP 눈에 실제로 어떻게 보이는지**를 정확히 해석하는 게 전�
 정리하면, PHP가 보는 최종 패턴(내 IP 기준)은 다음과 같다.
 
 ```
-/[1-3][a-f]{5}_.*14.41.76.65.*<TAB>p<TAB>a<TAB>s<TAB>s/
+/[1-3][a-f]{5}_.*203.0.113.45.*<TAB>p<TAB>a<TAB>s<TAB>s/
 ```
 
 ## 3. 문제점 — 어디가 "읽기 어렵게" 설계됐나
@@ -103,20 +103,20 @@ PHP 눈에 실제로 어떻게 보이는지**를 정확히 해석하는 게 전�
 | `[a-f]{5}` | a~f 다섯 글자 | `abcde` |
 | `_` | 밑줄 | `_` |
 | `.*` | 아무거나(생략 가능) | (빈 값) |
-| `14.41.76.65` | 내 IP | `14.41.76.65` |
+| `203.0.113.45` | 내 IP | `203.0.113.45` |
 | `.*` | 아무거나(생략 가능) | (빈 값) |
 | `\tp\ta\ts\ts` | 탭+p 탭+a 탭+s 탭+s | `<TAB>p<TAB>a<TAB>s<TAB>s` |
 
 이어 붙이면 최종 입력은 다음과 같다(가운데 사이사이는 **탭 문자**).
 
 ```
-1abcde_14.41.76.65<TAB>p<TAB>a<TAB>s<TAB>s
+1abcde_203.0.113.45<TAB>p<TAB>a<TAB>s<TAB>s
 ```
 
 URL에서는 탭을 `%09`로 인코딩하므로 요청은 이렇게 된다.
 
 ```
-GET /challenge/code-2/?val=1abcde_14.41.76.65%09p%09a%09s%09s
+GET /challenge/code-2/?val=1abcde_203.0.113.45%09p%09a%09s%09s
 ```
 
 ### 4-1. 패턴 해석을 먼저 로컬에서 검증
@@ -125,7 +125,7 @@ GET /challenge/code-2/?val=1abcde_14.41.76.65%09p%09a%09s%09s
 위 입력이 매칭되는지 확인했다(`\t`는 실제 탭, IP는 보간된 값).
 
 ```js
-const ip = '14.41.76.65', T = '\t';
+const ip = '203.0.113.45', T = '\t';
 // PHP 큰따옴표 패턴과 동일: \t = 탭, $_SERVER[REMOTE_ADDR] = ip
 const re  = new RegExp('[1-3][a-f]{5}_.*' + ip + '.*' + T+'p'+T+'a'+T+'s'+T+'s');
 const val = '1abcde_' + ip + T+'p'+T+'a'+T+'s'+T+'s';
@@ -138,12 +138,12 @@ re.test(val);   // → true
 
 ```js
 const url = 'https://webhacking.kr/challenge/code-2/?val='
-          + encodeURIComponent('1abcde_14.41.76.65\tp\ta\ts\ts');
+          + encodeURIComponent('1abcde_203.0.113.45\tp\ta\ts\ts');
 await fetch(url, { credentials: 'include' }).then(r => r.text());
 ```
 
 ```console
-GET /challenge/code-2/?val=1abcde_14.41.76.65%09p%09a%09s%09s
+GET /challenge/code-2/?val=1abcde_203.0.113.45%09p%09a%09s%09s
 → alert('old-11 Pwned!');
 → old-11 Pwned. You got 30point. Congratz!
 ```
