@@ -1,0 +1,5 @@
+# robots.txt — LeJus Blog (akqjq1000.github.io)
+User-agent: *
+Allow: /
+
+Sitemap: https://akqjq1000.github.io/sitemap-index.xml

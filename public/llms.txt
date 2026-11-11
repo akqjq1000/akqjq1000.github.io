@@ -1,0 +1,19 @@
+# LeJus Blog
+
+> 정보보안과 IT 기술을 직접 실험하고 기록하는 블로그. webhacking.kr·pwnable.kr 워게임 풀이와 웹·네트워크 기술 정리를 다룬다. 모든 글은 예측이 아니라 직접 실행·검증한 결과로만 작성한다.
+
+LeJus Blog(https://akqjq1000.github.io)는 Astro로 만든 한국어 정적 블로그다. 저자는 LeJus.
+
+## 주요 글
+
+- [webhacking.kr old-21 — Blind SQL Injection 풀이](https://akqjq1000.github.io/posts/2026-11-11-webhacking-kr-old-21/): 응답 세 가지로 만드는 불리언 오라클로 admin 비밀번호를 한 글자씩 복원.
+- [webhacking.kr old-05 — 클라이언트 신뢰와 공백 한 칸의 빈틈](https://akqjq1000.github.io/posts/2026-11-07-webhacking-kr-old-05/): 접근 제어를 클라이언트에만 둔 실수와 문자열 정규화 불일치.
+- [webhacking.kr old-18 — 공백 필터를 우회하는 SQL 인젝션](https://akqjq1000.github.io/posts/2026-10-21-webhacking-kr-old-18/): 숫자 컨텍스트 인젝션과 인코딩된 공백 우회.
+- [웹 서버 통신의 전 과정 — TCP·TLS·HTTP·HTML](https://akqjq1000.github.io/posts/2026-11-06-web-server-communication/): 주소창 Enter부터 렌더링까지 한 흐름으로.
+
+## 더 보기
+
+- [카테고리 목록](https://akqjq1000.github.io/categories/)
+- [태그 목록](https://akqjq1000.github.io/tags/)
+- [RSS 피드](https://akqjq1000.github.io/rss.xml)
+- [사이트맵](https://akqjq1000.github.io/sitemap-index.xml)
