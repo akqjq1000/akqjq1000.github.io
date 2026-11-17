@@ -3,7 +3,7 @@ export const SITE = {
   author: 'LeJus',
   tagline: '웹해킹 워게임 풀이와 보안·IT 기술 기록',
   description:
-    '정보보안과 IT 기술을 직접 실험하고 기록하는 블로그. webhacking.kr·pwnable.kr 워게임 풀이와 웹·네트워크·시스템 보안, 리버싱까지 예측이 아닌 실제 검증 결과로 정리합니다.',
+    '직접 실험하고 검증한 결과로 기록하는 보안·IT 블로그. 워게임 풀이와 웹·네트워크·시스템 보안을 다룹니다.',
   github: 'https://github.com/akqjq1000',
   ogImage: '/images/og-default.png',
   locale: 'ko-KR',
