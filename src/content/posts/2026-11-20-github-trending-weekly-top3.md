@@ -18,7 +18,7 @@ GitHub Trending(weekly)에서 금주 상위에 오른 세 저장소를 **직접 
 | 2 | **google-labs-code/stitch-skills** | Google Stitch용 에이전트 스킬 모음 | TypeScript | +1,567 |
 | 3 | **GoogleChrome/modern-web-guidance-src** | 코딩 에이전트에 최신 웹 베스트프랙티스를 주입 | TypeScript | +7,257 |
 
-> 결론부터: **#3는 이 시스템에서 설치·실행·예제까지 전부 검증**됐다. #1·#2는 **공식 설치 절차는 명확하나 실제 "실행 예제"에는 별도 조건**(에이전트 GUI·전용 계정)이 필요해, 이 글에서는 설치 절차와 **시스템 설치 가능성 검토 결과**까지만 검증했다.
+> 결론부터: **#3는 설치·실행·예제까지, #1(plannotator)은 Docker + 로컬 LLM으로 동작 예제까지 검증**했다. #2(stitch-skills)는 공식 설치기가 이 시스템에서 거부되어 **설치 가능성 검토**까지만 다룬다.
 
 ## 3. GoogleChrome/modern-web-guidance-src ✅ (설치·예제 검증 완료)
 
@@ -91,11 +91,32 @@ irm https://plannotator.ai/install.ps1 | iex
 - 바이너리만 원하면 `--minimal`(또는 `PLANNOTATOR_MINIMAL=1`) → 에이전트 설정을 건드리지 않고 `~/.local/bin`에만 설치.
 - Claude Code는 설치 후 `/plugin marketplace add backnotprop/plannotator` → `/plugin install plannotator@plannotator`.
 
-### 이 시스템 설치 가능성 검토
+### 동작 예제 — Docker 샌드박스 + 로컬 LLM
 
-- 최신 릴리스 **v0.29.1** 존재 확인(바이너리 배포 중).
-- ⚠️ 설치기는 **원격 스크립트 실행 + 사용자의 실제 에이전트 설정을 자동 변경**한다. **네이티브 Windows에서는 Codex 훅이 실험적**이라 설치기가 수동 설정 안내를 출력한다(저장소 문서 기준).
-- 이 글에서는 사용자의 에이전트 구성을 바꾸지 않기 위해 **전체 설치는 수행하지 않았다.** 실제 "주석 리뷰" 예제는 에이전트 세션이 계획을 만들어낼 때 동작하므로, 바이너리 설치 후 에이전트에서 확인하는 것이 맞다.
+최신 릴리스 **v0.29.1**, 플랫폼별 바이너리(`linux-x64`, `win32-x64.exe`, `darwin-*`) 제공. 공식 설치기는 원격 스크립트로 바이너리를 받고 **에이전트 설정을 자동 변경**하므로, 호스트를 건드리지 않도록 **Docker(Linux) 샌드박스에 바이너리만** 설치해 검증했다.
+
+plannotator는 **자체적으로 LLM을 호출하지 않는다**(사람이 주석하는 도구). 그래서 **로컬 LLM으로 "주석할 계획"을 생성 → plannotator로 리뷰 → 피드백 반환**하는 end-to-end 예제를 만들었다.
+
+**① 로컬 LLM(Ollama · OpenAI 호환 API · Qwen 모델)으로 계획 생성** — "Astro 블로그에 다크모드 토글 추가" 계획을 Markdown으로 받아 `plan.md`로 저장.
+
+**② `plannotator annotate plan.md`** — 생성된 계획이 주석 UI에 그대로 로드된다.
+
+![로컬 LLM이 생성한 계획이 plannotator 주석 UI에 로드된 모습](/images/plannotator-1-plan.jpg)
+
+**③ 주석 달기** — 코멘트를 남기면 상단 버튼이 **Send Feedback**(피드백 1건)으로 바뀐다.
+
+![코멘트를 남기자 Send Feedback 상태가 된 화면](/images/plannotator-2-feedback.jpg)
+
+**④ 피드백 전송** — plannotator가 **에이전트로 돌려줄 형식**의 피드백을 출력한다.
+
+```text
+# File Feedback
+I've reviewed this file and have 1 piece of feedback:
+## 1. General feedback about the file
+> 4번(초기 테마 적용)은 FOUC 방지를 위해 <head>에 인라인 스크립트로 넣는 걸 명시해 주세요. 2번 토글은 aria-pressed 속성도 추가 권장.
+```
+
+즉 **LLM 생성 계획 → 사람 주석 → 피드백 반환**의 핵심 루프가 로컬 LLM만으로 동작함을 확인했다. 실제 운용에선 `plannotator inbox mcp`로 에이전트(Claude Code·Codex·OpenCode 등)를 연결해, 에이전트가 만든 계획을 자동으로 받아 주석한다.
 
 ## 2. google-labs-code/stitch-skills (설치 검토)
 
@@ -125,11 +146,11 @@ npx plugins add google-labs-code/stitch-skills --scope project --target claude-c
 | 저장소 | 이 시스템 설치 | 동작 예제 | 비고 |
 | --- | --- | --- | --- |
 | modern-web-guidance | ✅ (npx) | ✅ search/retrieve/legacy-scan | Node 22+면 즉시 사용 |
-| plannotator | △ 바이너리 설치 가능 | ⛔(에이전트 필요) | Win 네이티브 훅 실험적 |
+| plannotator | ✅ (Docker) | ✅ 로컬 LLM 계획 주석 | inbox mcp로 에이전트 연결 |
 | stitch-skills | △ 수동만 | ⛔(Stitch 계정 필요) | 권장 설치기 실패 |
 
 - **지금 당장 써 볼 수 있는 건 modern-web-guidance**다. `npx` 한 줄로 최신 웹 표준 지침을 검색·주입할 수 있어 설치 장벽이 가장 낮다.
-- plannotator·stitch-skills는 "에이전트 생태계" 도구라, **에이전트/계정이 갖춰진 환경**에서 진짜 가치가 나온다. 설치 절차 자체는 명확하니, 조건이 맞는 환경에서 적용하면 된다.
+- plannotator는 Docker + 로컬 LLM으로 **"계획 생성 → 주석 → 피드백" 루프까지 동작**을 확인했다. 자체 LLM이 아니라 **에이전트/로컬 LLM이 만든 산출물을 사람이 리뷰**하는 도구라는 점이 핵심이다. stitch-skills는 전용 계정·에이전트가 갖춰진 환경에서 가치가 나온다.
 - 트렌딩 상위라고 아무 데서나 바로 돌아가는 건 아니다. **"내 시스템/워크플로에 설치 가능한가"를 먼저 확인**하는 습관이 결국 시간을 아낀다.
 
 ---
