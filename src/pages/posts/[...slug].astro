@@ -8,9 +8,19 @@ import { url, formatDate, readingTime, SITE } from '../../lib/site';
 export async function getStaticPaths() {
   const posts = await getPosts();
   return posts.map((post, i) => {
-    const related = posts
-      .filter((p) => p.id !== post.id && p.data.category === post.data.category)
-      .slice(0, 4);
+    // 관련 글: 같은 카테고리 먼저, 부족하면 태그가 겹치는 글로 4개까지 채운다(내부 링크 보강).
+    const sameCat = posts.filter((p) => p.id !== post.id && p.data.category === post.data.category);
+    const related = sameCat.slice(0, 4);
+    if (related.length < 4 && post.data.tags.length) {
+      const chosen = new Set(related.map((p) => p.id));
+      const byTag = posts.filter(
+        (p) =>
+          p.id !== post.id &&
+          !chosen.has(p.id) &&
+          p.data.tags.some((t) => post.data.tags.includes(t)),
+      );
+      related.push(...byTag.slice(0, 4 - related.length));
+    }
     return {
       params: { slug: post.id },
       props: { post, newer: posts[i - 1], older: posts[i + 1], related },
@@ -74,7 +84,7 @@ const blogPostingLd = {
     <footer class="post-footer">
       {related.length > 0 && (
         <section class="related" aria-label="관련 글">
-          <h2 class="section-title">같은 카테고리의 다른 글</h2>
+          <h2 class="section-title">관련 글</h2>
           <ul class="related-list">
             {related.map((p) => (
               <li>
