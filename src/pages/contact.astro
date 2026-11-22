@@ -1,0 +1,39 @@
+---
+import Base from '../layouts/Base.astro';
+import { SITE } from '../lib/site';
+const gh = SITE.github;
+const ghHandle = gh.replace('https://github.com/', '@');
+// 이메일을 공개하려면 아래 EMAIL 값을 원하는 주소로 바꾸세요(비워 두면 이메일 항목이 숨겨집니다).
+const EMAIL = '';
+---
+<Base title="연락처" description="LeJus Blog 연락처 — GitHub를 통한 문의 안내.">
+  <section class="hero">
+    <p class="eyebrow">$ cat ./contact</p>
+    <h1>연락처</h1>
+    <p>글 내용, 오류 제보, 제휴·문의는 아래 수단으로 연락해 주세요.</p>
+  </section>
+  <section class="prose">
+    <h2>GitHub</h2>
+    <p>
+      가장 빠른 연락 방법은 GitHub입니다. 오탈자·오류 제보나 질문은
+      <a href={gh} target="_blank" rel="noopener noreferrer">{ghHandle}</a>의 프로필 또는 저장소 이슈로 남겨 주세요.
+    </p>
+    <ul>
+      <li><strong>프로필:</strong> <a href={gh} target="_blank" rel="noopener noreferrer">{gh}</a></li>
+      <li><strong>이슈:</strong> 블로그 저장소의 <code>Issues</code> 탭</li>
+    </ul>
+
+    {EMAIL && (
+      <>
+        <h2>이메일</h2>
+        <p><a href={`mailto:${EMAIL}`}>{EMAIL}</a></p>
+      </>
+    )}
+
+    <h2>안내</h2>
+    <p>
+      문의 내용에 따라 답변까지 다소 시간이 걸릴 수 있습니다. 개인정보 처리에 관한 사항은
+      <a href="/privacy/">개인정보처리방침</a>을 참고해 주세요.
+    </p>
+  </section>
+</Base>

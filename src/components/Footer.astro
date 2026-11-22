@@ -4,6 +4,8 @@ import { SITE, url } from '../lib/site';
 <footer class="site-footer">
   <div class="container">
     <span>© {new Date().getFullYear()} {SITE.author}</span>
-    <span><a href={SITE.github} target="_blank" rel="noopener">GitHub</a> · <a href={url('/rss.xml')}>RSS</a></span>
+    <span class="foot-links">
+      <a href={url('/about')}>About</a> · <a href={url('/privacy')}>개인정보처리방침</a> · <a href={url('/contact')}>연락처</a> · <a href={SITE.github} target="_blank" rel="noopener">GitHub</a> · <a href={url('/rss.xml')}>RSS</a>
+    </span>
   </div>
 </footer>
