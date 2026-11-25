@@ -5,6 +5,7 @@ date: 2026-10-16
 updated: 2026-10-20
 category: Note
 tags: [blog, intro]
+draft: true
 ---
 
 LeJus Blog는 **정보보안**과 **IT 기술**을 직접 실험하고, 그 과정을 기록하는 공간입니다.
