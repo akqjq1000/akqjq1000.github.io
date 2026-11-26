@@ -4,6 +4,7 @@ description: "Meta가 공개한 React 19 디자인 시스템 Astryx를 Vite 프�
 date: 2026-11-11
 category: Dev
 tags: [astryx, react, design-system, meta, stylex, vite, frontend]
+draft: true
 ---
 
 [Astryx](https://github.com/meta/astryx)는 Meta가 공개한 오픈소스 React 디자인 시스템이다.

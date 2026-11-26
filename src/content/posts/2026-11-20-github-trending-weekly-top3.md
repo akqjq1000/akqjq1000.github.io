@@ -4,7 +4,7 @@ description: "2026년 11월 셋째 주 GitHub Trending(weekly) 상위 3개 저�
 date: 2026-11-20
 category: Dev
 tags: [github-trending, cli, agent-skills, nodejs, tools]
-draft: false
+draft: true
 ---
 
 GitHub Trending(weekly)에서 금주 상위에 오른 세 저장소를 **직접 설치·설정**해 봤다. 모든 명령과 결과는 **실제 실행으로 검증**했고, 실행이 불가한 부분은 **"무엇이 막혔는지"를 그대로** 적었다(지어내지 않음).
