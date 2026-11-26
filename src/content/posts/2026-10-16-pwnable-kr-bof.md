@@ -6,10 +6,9 @@ category: Security
 tags: [pwnable.kr, pwn, wargame, buffer-overflow, stack-canary, reverse-engineering]
 ---
 
-[pwnable.kr](https://pwnable.kr) **Toddler's Bottle** 세 번째 문제 `bof`.
-`gets()`로 생긴 전형적인 **스택 버퍼 오버플로우**로, 스택 위의 지역/인자 값을 덮어써서 분기를 바꾸는 문제다.
-[fd](/posts/2026-10-16-pwnable-kr-fd/) · [collision](/posts/2026-10-16-pwnable-kr-collision/)에 이어
-바이너리를 REA로 분석해 **오프셋을 바이너리 수준에서 확정**하고 원격에서 셸을 땄다.
+> pwnable.kr은 합법적인 시스템 해킹 학습용 워게임이다. 이 글은 교육 목적의 풀이 기록이다.
+
+[pwnable.kr](https://pwnable.kr) Toddler's Bottle 세 번째 문제 `bof`를 풀었다. `gets()`로 생긴 전형적인 스택 버퍼 오버플로우로, 스택 위의 지역변수와 인자 값을 덮어써서 분기를 바꾸는 문제다. [fd](/posts/2026-10-16-pwnable-kr-fd/)와 [collision](/posts/2026-10-16-pwnable-kr-collision/)에 이어, 바이너리를 REA로 분석해 오프셋을 바이너리 수준에서 확정하고 원격에서 셸을 땄다.
 
 ![pwnable.kr bof 문제 페이지](/images/bof-challenge.jpg)
 
@@ -22,8 +21,7 @@ tags: [pwnable.kr, pwn, wargame, buffer-overflow, stack-canary, reverse-engineer
 | 접속 | `nc pwnable.kr 10003` (bof 바이너리가 직접 실행됨) |
 | 설명 | *Nana told me that buffer overflow is one of the most common software vulnerability. Is that true?* |
 
-fd·collision과 달리, 원격은 래퍼 셸이 아니라 **`bof` 바이너리를 직접 실행**한다
-(`socat TCP-LISTEN:10003,fork EXEC:bof`). 접속하면 바로 `overflow me : ` 프롬프트가 뜬다.
+fd·collision과 달리, 원격은 래퍼 셸이 아니라 `bof` 바이너리를 직접 실행한다(`socat TCP-LISTEN:10003,fork EXEC:bof`). 접속하면 바로 `overflow me : ` 프롬프트가 뜬다.
 
 ## 2. 소스 코드
 
@@ -49,15 +47,15 @@ int main(int argc, char* argv[]){
 }
 ```
 
-- `main`은 `func(0xdeadbeef)`를 호출한다 → 인자 `key`의 초기값은 `0xdeadbeef`.
-- `func`는 32바이트 버퍼 `overflowme`에 **`gets()`** 로 입력을 받는다 → **길이 제한이 없다**.
-- `key == 0xcafebabe` 이면 셸을 준다.
+- `main`은 `func(0xdeadbeef)`를 호출하므로 인자 `key`의 초기값은 `0xdeadbeef`다.
+- `func`는 32바이트 버퍼 `overflowme`에 `gets()`로 입력을 받는다. 길이 제한이 없다.
+- `key == 0xcafebabe`이면 셸을 준다.
 
-즉 `overflowme`를 넘치게 입력해서, 스택 위에 있는 **인자 `key`를 `0xcafebabe`로 덮어쓰면** 된다.
+즉 `overflowme`를 넘치게 입력해서, 스택 위에 있는 인자 `key`를 `0xcafebabe`로 덮으면 된다.
 
-## 3. REA 정적 분석 — 오프셋 확정 + 카나리 발견
+## 3. REA 정적 분석 — 오프셋 확정과 카나리 발견
 
-REA(Hopper)로 `func`를 분석하자 소스에는 안 보이던 **스택 카나리**가 드러났다.
+REA(Hopper)로 `func`를 분석하자 소스에는 안 보이던 스택 카나리가 드러났다.
 
 ```nasm
 0x1202: sub  esp, 0x30
@@ -92,40 +90,30 @@ REA(Hopper)로 `func`를 분석하자 소스에는 안 보이던 **스택 카나
 [ ebp+0x08 ] key  ← 0xcafebabe 로 덮을 대상
 ```
 
-**버퍼 시작(ebp-0x2C) → key(ebp+0x8) 까지의 거리:**
+버퍼 시작(ebp-0x2C)에서 key(ebp+0x8)까지의 거리를 계산하면 다음과 같다.
 
 ```
 (ebp+0x08) - (ebp-0x2C) = 0x34 = 52 바이트
 ```
 
-→ `"A" × 52 + "\xbe\xba\xfe\xca"` (0xcafebabe, 리틀 엔디언).
+따라서 페이로드는 `"A" × 52 + "\xbe\xba\xfe\xca"`(0xcafebabe, 리틀 엔디언)가 된다.
 
 ### 카나리가 있는데 왜 뚫리나?
 
-핵심 포인트다. `key`를 덮으려면 그 사이에 있는 **카나리까지 반드시 덮게** 된다.
-보통 카나리를 건드리면 `__stack_chk_fail`로 프로그램이 죽는다. 그런데 이 문제는:
+`key`를 덮으려면 그 사이에 있는 카나리까지 반드시 덮게 된다. 보통 카나리를 건드리면 `__stack_chk_fail`로 프로그램이 죽는다. 그런데 이 문제는 승리 조건인 `system("/bin/sh")`가 함수 본문 안에서 실행되고, 카나리 검사는 함수 에필로그(분기 판정 이후)에 있다.
 
-- 승리 조건 **`system("/bin/sh")` 가 함수 *본문* 안에서 실행**된다.
-- 카나리 검사는 함수 **에필로그(= 분기 판정 *이후*)** 에 있다.
-
-따라서 **셸을 먼저 얻고**, 카나리 검사는 그 뒤(셸 종료 후)에나 돌아온다.
-즉 "셸만 따면 끝"인 이 문제에서는 **카나리가 익스플로잇을 막지 못한다.**
-(만약 `return` 이후로 제어 흐름을 가져가는 ROP가 목표였다면 카나리 우회가 필요했을 것이다.)
+따라서 셸을 먼저 얻고, 카나리 검사는 그 뒤(셸 종료 후)에나 돌아온다. 셸만 따면 끝인 이 문제에서는 카나리가 익스플로잇을 막지 못한다. 만약 `return` 이후로 제어 흐름을 가져가는 ROP가 목표였다면 카나리 우회가 필요했을 것이다.
 
 ## 4. 원격 풀이와 함정 하나
 
-`gets()`로 페이로드를 보내 `key`를 덮으면 `system("/bin/sh")`가 뜬다.
-그런데 실제로 풀 때 **셸은 떴지만 `cat flag`가 먹히지 않는 현상**을 만났다.
+`gets()`로 페이로드를 보내 `key`를 덮으면 `system("/bin/sh")`가 뜬다. 그런데 실제로 풀 때 셸은 떴지만 `cat flag`가 먹히지 않는 현상을 만났다.
 
 ```
 overflow me : /bin/sh: 0: can't access tty; job control turned off
 $            ← 셸은 떴는데, 이후 보낸 명령이 실행되지 않음
 ```
 
-원인은 입력 타이밍이었다. 원격 PTY(`setsid`, `echo=0`) 구성에서,
-**셸이 시작된 *뒤*에 도착한 입력이 셸의 stdin으로 전달되지 않았다.**
-해결책은 간단하다 — **페이로드와 명령을 한 번에 전송**해서,
-`gets()`가 첫 줄(페이로드)을 읽고 나면 **남은 명령이 PTY 버퍼에 이미 들어 있도록** 하는 것.
+원인은 입력 타이밍이었다. 원격 PTY(`setsid`, `echo=0`) 구성에서, 셸이 시작된 뒤에 도착한 입력이 셸의 stdin으로 전달되지 않았다. 해결책은 페이로드와 명령을 한 번에 전송해서, `gets()`가 첫 줄(페이로드)을 읽고 나면 남은 명령이 PTY 버퍼에 이미 들어 있도록 하는 것이다.
 
 ```python
 # 페이로드 + 명령을 한 번의 send로 전송 → PTY 버퍼에 미리 적재
@@ -141,15 +129,13 @@ overflow me : /bin/sh: 0: can't access tty; job control turned off
 $ <플래그 출력 — 공개 글에서는 가림>
 ```
 
-> 셸을 얻어 `bof_pwn` 권한으로 플래그를 읽어 문제를 해결했다. 값은 가린다 —
-> pwnable.kr의 **Submit flag** 에 직접 입력하면 점수가 올라간다.
+셸을 얻어 `bof_pwn` 권한으로 플래그를 읽어 문제를 해결했다. 값은 가린다. pwnable.kr의 Submit flag에 직접 입력하면 점수가 올라간다.
 
 ## 5. 정리
 
-- `bof`의 본질은 `gets()`로 **스택 지역/인자 값을 덮어써 분기를 조작**하는 것.
-- REA로 `overflowme(ebp-0x2C) → key(ebp+0x8) = 52바이트` 오프셋을 **바이너리에서 확정**했다.
-- 소스엔 없던 **스택 카나리**가 있었지만, 승리 지점이 에필로그보다 앞서 실행되므로 익스플로잇은 성립했다.
-- 원격 PTY에서는 **페이로드와 후속 명령을 한 번에 보내** 입력 전달 타이밍 문제를 피했다.
+- `bof`의 본질은 `gets()`로 스택 지역변수와 인자 값을 덮어써 분기를 조작하는 것이다.
+- REA로 `overflowme(ebp-0x2C)`에서 `key(ebp+0x8)`까지 52바이트 오프셋을 바이너리에서 확정했다.
+- 소스엔 없던 스택 카나리가 있었지만, 승리 지점이 에필로그보다 앞서 실행되므로 익스플로잇은 성립했다.
+- 원격 PTY에서는 페이로드와 후속 명령을 한 번에 보내 입력 전달 타이밍 문제를 피했다.
 
-> 보호기법(카나리)이 "있다/없다"가 아니라, **보호가 실제로 작동하는 지점**을 읽는 것이 핵심이다.
-> 다음은 `flag` — 패킹된 바이너리 언패킹으로 이어진다.
+보호기법이 있다/없다가 아니라, 그 보호가 실제로 작동하는 지점을 읽는 것이 핵심이다.

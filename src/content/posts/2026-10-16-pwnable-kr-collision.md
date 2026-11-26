@@ -6,11 +6,9 @@ category: Security
 tags: [pwnable.kr, pwn, wargame, linux, reverse-engineering, c]
 ---
 
-[pwnable.kr](https://pwnable.kr) **Toddler's Bottle** 두 번째 문제 `collision`(바이너리 이름 `col`).
-"MD5 해시 충돌 같은 걸 해보고 싶다"는 설명이지만, 실제로는 MD5가 아니라
-**아주 단순한 체크섬(int 5개의 합)을 목표값과 충돌시키는** 문제다.
-[fd 풀이](/posts/2026-10-16-pwnable-kr-fd/)와 마찬가지로 바이너리를 REA로 교차검증하고
-원격에서 직접 풀었다.
+> pwnable.kr은 합법적인 시스템 해킹 학습용 워게임이다. 이 글은 교육 목적의 풀이 기록이다.
+
+[pwnable.kr](https://pwnable.kr) Toddler's Bottle 두 번째 문제 `collision`(바이너리 이름 `col`)을 풀었다. "MD5 해시 충돌 같은 걸 해보고 싶다"는 설명이지만, 실제로는 MD5가 아니라 아주 단순한 체크섬(int 5개의 합)을 목표값과 충돌시키는 문제다. [fd 풀이](/posts/2026-10-16-pwnable-kr-fd/)와 마찬가지로 바이너리를 REA로 교차검증하고 원격에서 직접 풀었다.
 
 ![pwnable.kr collision 문제 페이지](/images/col-challenge.jpg)
 
@@ -56,29 +54,22 @@ int main(int argc, char* argv[]){
 }
 ```
 
-읽어야 할 조건은 둘이다.
-
-1. `strlen(argv[1]) == 20` — 패스코드는 **정확히 20바이트**.
-2. `check_password(argv[1]) == 0x21DD09EC`.
+읽어야 할 조건은 둘이다. 패스코드는 정확히 20바이트여야 하고(`strlen(argv[1]) == 20`), `check_password(argv[1])`가 `0x21DD09EC`와 같아야 한다.
 
 ## 3. 핵심: `char*`를 `int*`로 캐스팅
 
-`check_password`는 받은 `char* p`(20바이트)를 **`int* ip`로 캐스팅**한 뒤
-`ip[0..4]`를 더한다. 즉 20바이트를 **4바이트 정수 5개**로 재해석해서 그 합을 구한다.
+`check_password`는 받은 `char* p`(20바이트)를 `int* ip`로 캐스팅한 뒤 `ip[0..4]`를 더한다. 즉 20바이트를 4바이트 정수 5개로 재해석해서 그 합을 구한다.
 
 ```c
 int* ip = (int*)p;      // 20 bytes → int[5]
 for(i=0;i<5;i++) res += ip[i];   // 5개 int의 합
 ```
 
-x86은 **리틀 엔디언**이므로, 메모리의 첫 4바이트 `b0 b1 b2 b3` 은
-정수 `0xb3b2b1b0` 으로 읽힌다. 이 점이 입력 바이트를 설계할 때 핵심이 된다.
+x86은 리틀 엔디언이므로 메모리의 첫 4바이트 `b0 b1 b2 b3`은 정수 `0xb3b2b1b0`으로 읽힌다. 입력 바이트를 설계할 때 이 점이 핵심이 된다.
 
 ## 4. REA로 정적 분석
 
-REA(Hopper)로 `col`(`ELF 32-bit, PIE, not stripped`)을 분석했다.
-
-**`check_password`** — 소스의 루프가 그대로 보인다.
+REA(Hopper)로 `col`(`ELF 32-bit, PIE, not stripped`)을 분석했다. `check_password`에는 소스의 루프가 그대로 보인다.
 
 ```nasm
 0x120a: mov dword [ebp+var_4], 0x0      ; i = 0
@@ -92,9 +83,7 @@ REA(Hopper)로 `col`(`ELF 32-bit, PIE, not stripped`)을 분석했다.
 0x1227: add dword [ebp+var_4], 0x1      ; i++
 ```
 
-`mov eax, dword [eax]` 가 **4바이트 단위 로드**임을 확인할 수 있다 — 포인터 캐스팅이 바이트 접근이 아니라 int 접근으로 컴파일됐다는 증거다.
-
-**`main`** — 길이 검사와 비교 지점이 명확하다.
+`mov eax, dword [eax]`가 4바이트 단위 로드임을 확인할 수 있다. 포인터 캐스팅이 바이트 접근이 아니라 int 접근으로 컴파일됐다는 증거다. `main`에는 길이 검사와 비교 지점이 명확하다.
 
 ```nasm
 0x1289: call sub_1090        ; strlen(argv[1])
@@ -108,14 +97,11 @@ REA(Hopper)로 `col`(`ELF 32-bit, PIE, not stripped`)을 분석했다.
 ; 같으면 setregid → system("/bin/cat flag")
 ```
 
-- `cmp eax, 0x14` → 길이 20 확인.
-- `hashcode` 심볼을 직접 로드해 `check_password` 결과와 `cmp`.
-- **소스와 완전 일치.** 숨겨진 변형은 없다.
+`cmp eax, 0x14`로 길이 20을 확인하고, `hashcode` 심볼을 직접 로드해 `check_password` 결과와 `cmp`한다. 소스와 완전히 일치하며 숨겨진 변형은 없다.
 
 ## 5. 패스코드 역산
 
-목표: 서로 더해 `0x21DD09EC` 가 되는 int 5개.
-가장 간단하게 **4개는 같은 값, 1개로 나머지를 보정**한다.
+목표는 서로 더해 `0x21DD09EC`가 되는 int 5개다. 가장 간단하게 4개는 같은 값으로 두고, 1개로 나머지를 보정한다.
 
 ```
 0x21DD09EC ÷ 5 = 0x06C5CEC8 … 나머지 4
@@ -125,7 +111,7 @@ REA(Hopper)로 `col`(`ELF 32-bit, PIE, not stripped`)을 분석했다.
 검산: 0x06C5CEC8 × 4 + 0x06C5CECC = 0x21DD09EC  ✓
 ```
 
-리틀 엔디언 바이트열(20바이트)로 변환:
+리틀 엔디언 바이트열(20바이트)로 변환한다.
 
 ```
 0x06C5CEC8 → C8 CE C5 06
@@ -134,13 +120,11 @@ REA(Hopper)로 `col`(`ELF 32-bit, PIE, not stripped`)을 분석했다.
 passcode = C8 CE C5 06  C8 CE C5 06  C8 CE C5 06  C8 CE C5 06  CC CE C5 06
 ```
 
-- 널 바이트(`0x00`)가 없어 `strlen`이 중간에 끊기지 않는다 → 길이 20 보장.
-- 공백/개행 바이트도 없어 셸 인자로 넘길 때 분리되지 않는다.
+널 바이트(`0x00`)가 없어 `strlen`이 중간에 끊기지 않으므로 길이 20이 보장되고, 공백/개행 바이트도 없어 셸 인자로 넘길 때 분리되지 않는다.
 
 ## 6. 원격 풀이
 
-패스코드에 **출력 불가능한 바이너리 바이트**가 섞여 있으므로, 셸에서 직접 타이핑할 수 없다.
-`python`으로 정확한 argv를 만들어 `col`을 실행했다. (바이트 전달 안정성을 위해 명령을 base64로 감싸 전송)
+패스코드에 출력 불가능한 바이너리 바이트가 섞여 있으므로 셸에서 직접 타이핑할 수 없다. `python`으로 정확한 argv를 만들어 `col`을 실행했다. 바이트 전달 안정성을 위해 명령을 base64로 감싸 전송했다.
 
 ```python
 # 원격에서 실행된 명령(복원)
@@ -159,15 +143,11 @@ col@...:/tmp/tmp.xxxx$ python2 -c 'import os;os.execv("./col",["col","\xc8..."])
 <플래그 출력 — 공개 글에서는 가림>
 ```
 
-> 플래그는 정상 출력되어 문제를 해결했다. 다른 학습자를 위해 값은 가린다 —
-> pwnable.kr의 **Submit flag** 에 직접 입력하면 점수가 올라간다.
+플래그는 정상 출력되어 문제를 해결했다. 다른 학습자를 위해 값은 가린다. pwnable.kr의 Submit flag에 직접 입력하면 점수가 올라간다.
 
 ## 7. 정리
 
-- `collision`의 본질은 MD5가 아니라 **`char*`를 `int*`로 캐스팅해 만든 약한 체크섬**이다.
-- 20바이트를 **리틀 엔디언 int 5개**로 보고, 합이 `0x21DD09EC`가 되도록 역산하면 된다.
-- **널·공백 바이트를 피하는 것**이 길이 검사와 셸 인자 전달 양쪽에서 중요하다.
-- REA 어셈블리에서 `mov eax,[eax]`(4바이트 로드)와 `cmp eax,0x14`로
-  **포인터 캐스팅과 길이 조건을 바이너리 수준에서 확정**할 수 있었다.
-
-> 다음은 `bof` — 스택 버퍼 오버플로우로 넘어간다.
+- `collision`의 본질은 MD5가 아니라 `char*`를 `int*`로 캐스팅해 만든 약한 체크섬이다.
+- 20바이트를 리틀 엔디언 int 5개로 보고, 합이 `0x21DD09EC`가 되도록 역산하면 된다.
+- 널·공백 바이트를 피하는 것이 길이 검사와 셸 인자 전달 양쪽에서 중요하다.
+- REA 어셈블리의 `mov eax,[eax]`(4바이트 로드)와 `cmp eax,0x14`로 포인터 캐스팅과 길이 조건을 바이너리 수준에서 확정할 수 있었다.

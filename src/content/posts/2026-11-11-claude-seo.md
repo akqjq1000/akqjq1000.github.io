@@ -4,6 +4,7 @@ description: "Claude Code용 오픈소스 SEO 플러그인 claude-seo를 실제�
 date: 2026-11-11
 category: Dev
 tags: [claude-seo, seo, claude-code, llms-txt, structured-data, schema, astro]
+draft: true
 ---
 
 [claude-seo](https://github.com/AgriciDaniel/claude-seo)는 Claude Code 안에서 도는 오픈소스 SEO 감사 플러그인이다(MIT).
